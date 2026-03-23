@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  brandingColors  String?  // JSON string
+  logoUrl         String?
+  planType        String   @default("FREE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           User[]
+  workoutTemplates WorkoutTemplate[]
+  exercises       Exercise[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  role         String   @default("STUDENT")
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  profile      StudentProfile?
+  workouts     Workout[]
+  progress     ProgressEntry[]
+}
+
+model StudentProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  weight      Float?
+  height      Float?
+  goals       String?
+  birthDate   DateTime?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WorkoutTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  objective   String?
+  description String?
+  split       String?  // ex: "A", "Costas/Biceps", "FullBody"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  exercises   TemplateExercise[]
+  workouts    Workout[]
+}
+
+model TemplateExercise {
+  id          String   @id @default(cuid())
+  templateId  String
+  exerciseId  String
+  sets        Int
+  reps        String
+  load        String?  // carga
+  restTime    Int?     // in seconds
+  notes       String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  template    WorkoutTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exercise    Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  studentId   String
+  templateId  String?
+  name        String
+  objective   String?
+  split       String?
+  dateAssigned DateTime?
+  dateCompleted DateTime?
+  status      String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  template    WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  exercises   WorkoutExercise[]
+}
+
+model Exercise {
+  id               String   @id @default(cuid())
+  tenantId         String?  // null if global library
+  name             String
+  targetMuscle     String?
+  description      String?
+  instructions     String?
+  commonMistakes   String?
+  difficultyLevel  String?
+  equipment        String?
+  videoUrl         String?
+  thumbnailUrl     String?
+  category         String?
+  tags             String?  // JSON string or comma separated
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant           Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workoutExercises WorkoutExercise[]
+  templateExercises TemplateExercise[]
+}
+
+model WorkoutExercise {
+  id          String   @id @default(cuid())
+  workoutId   String
+  exerciseId  String
+  sets        Int
+  reps        String
+  load        String?
+  restTime    Int?     // in seconds
+  notes       String?
+  order       Int
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+}
+
+model ProgressEntry {
+  id          String   @id @default(cuid())
+  studentId   String
+  date        DateTime @default(now())
+  weight      Float?
+  notes       String?
+  photos      String?    // array of urls as JSON string
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
