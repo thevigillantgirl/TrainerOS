@@ -23,7 +23,7 @@ export async function assignWorkout(formData: FormData) {
         }
 
         // Busca o template completo com seus exercícios
-        const template = await prisma.workoutTemplate.findUnique({
+        const template = await prisma.workoutTemplate.findFirst({
             where: { id: templateId, tenantId: session.tenantId },
             include: { exercises: true }
         });

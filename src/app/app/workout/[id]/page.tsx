@@ -6,15 +6,16 @@ import { ArrowLeft, Target, Trophy, Clock, CheckCircle } from 'lucide-react';
 import ExerciseCard from './ExerciseCard';
 import { finishWorkout } from './actions';
 
-export default async function StudentWorkoutExecution({ params }: { params: { id: string } }) {
+export default async function StudentWorkoutExecution({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
     if (!token) return null;
     const session = await decrypt(token);
     if (!session || session.role !== 'STUDENT') return null;
 
-    const workout = await prisma.workout.findUnique({
-        where: { id: params.id, studentId: session.userId },
+    const workout = await prisma.workout.findFirst({
+        where: { id: resolvedParams.id, studentId: session.userId },
         include: {
             exercises: {
                 orderBy: { order: 'asc' },
@@ -77,8 +78,8 @@ export default async function StudentWorkoutExecution({ params }: { params: { id
                     <button
                         type="submit"
                         className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${progressPercentage === 100
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/40 transform hover:-translate-y-1'
-                                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/40 transform hover:-translate-y-1'
+                            : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                             }`}
                     >
                         <Trophy size={20} /> Finalizar Treino Hoje

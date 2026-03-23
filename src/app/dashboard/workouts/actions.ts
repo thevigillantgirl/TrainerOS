@@ -37,3 +37,31 @@ export async function addWorkoutTemplate(formData: FormData) {
         return { success: false, error: 'Erro interno ao criar treino' };
     }
 }
+
+export async function archiveWorkoutTemplate(id: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+
+    await prisma.workoutTemplate.update({
+        where: { id, tenantId: session.tenantId },
+        data: { archivedAt: new Date() }
+    });
+    revalidatePath('/dashboard/workouts');
+}
+
+export async function deleteWorkoutTemplate(id: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+
+    await prisma.workoutTemplate.update({
+        where: { id, tenantId: session.tenantId },
+        data: { deletedAt: new Date() }
+    });
+    revalidatePath('/dashboard/workouts');
+}

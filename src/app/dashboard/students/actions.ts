@@ -51,3 +51,31 @@ export async function addStudent(formData: FormData) {
         return { success: false, error: 'Ocorreu um erro interno ao salvar o aluno. Tente novamente.' };
     }
 }
+
+export async function deactivateStudent(studentId: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+
+    await prisma.user.update({
+        where: { id: studentId, tenantId: session.tenantId },
+        data: { status: 'INACTIVE' }
+    });
+    revalidatePath('/dashboard/students');
+}
+
+export async function deleteStudent(studentId: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+
+    await prisma.user.update({
+        where: { id: studentId, tenantId: session.tenantId },
+        data: { deletedAt: new Date(), status: 'DELETED' }
+    });
+    revalidatePath('/dashboard/students');
+}

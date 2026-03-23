@@ -47,7 +47,7 @@ export async function finishWorkout(formData: FormData) {
 
         const workoutId = formData.get('workoutId') as string;
 
-        const workout = await prisma.workout.findUnique({
+        const workout = await prisma.workout.findFirst({
             where: { id: workoutId, studentId: session.userId }
         });
         if (!workout) { /* Handle error or redirect */ }

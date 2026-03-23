@@ -6,15 +6,16 @@ import { ArrowLeft, Target, Filter, Plus, GripVertical, Trash2 } from 'lucide-re
 import AddTemplateExerciseForm from './AddTemplateExerciseForm';
 import { removeTemplateExercise } from './actions';
 
-export default async function WorkoutTemplateDetail({ params }: { params: { id: string } }) {
+export default async function WorkoutTemplateDetail({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
     if (!token) return null;
     const session = await decrypt(token);
     if (!session || session.role !== 'ADMIN') return null;
 
-    const template = await prisma.workoutTemplate.findUnique({
-        where: { id: params.id, tenantId: session.tenantId },
+    const template = await prisma.workoutTemplate.findFirst({
+        where: { id: resolvedParams.id, tenantId: session.tenantId },
         include: {
             exercises: {
                 orderBy: { order: 'asc' },

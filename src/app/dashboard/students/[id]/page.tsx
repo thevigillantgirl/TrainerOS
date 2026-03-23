@@ -5,15 +5,16 @@ import Link from 'next/link';
 import { ArrowLeft, User, Calendar, Mail, CheckCircle, Clock } from 'lucide-react';
 import AssignWorkoutForm from './AssignWorkoutForm';
 
-export default async function StudentDetailPage({ params }: { params: { id: string } }) {
+export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const token = cookieStore.get('session')?.value;
     if (!token) return null;
     const session = await decrypt(token);
     if (!session || session.role !== 'ADMIN') return null;
 
-    const student = await prisma.user.findUnique({
-        where: { id: params.id, tenantId: session.tenantId, role: 'STUDENT' },
+    const student = await prisma.user.findFirst({
+        where: { id: resolvedParams.id, tenantId: session.tenantId, role: 'STUDENT' },
         include: {
             profile: true,
             workouts: {
@@ -75,7 +76,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
                                         <h3 className="text-lg font-bold text-white">{workout.name}</h3>
                                         <div className="flex items-center gap-3 mt-2">
                                             <span className={`px-2 py-1 text-xs font-bold rounded-md ${workout.status === 'COMPLETED' ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-800/50' :
-                                                    'bg-blue-900/30 text-blue-400 border border-blue-800/50'
+                                                'bg-blue-900/30 text-blue-400 border border-blue-800/50'
                                                 }`}>
                                                 {workout.status === 'COMPLETED' ? 'CONCLUÍDO' : 'PENDENTE'}
                                             </span>
