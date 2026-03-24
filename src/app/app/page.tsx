@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { decrypt } from '@/lib/auth';
 import { Play } from 'lucide-react';

@@ -59,9 +59,9 @@ export async function removeTemplateExercise(formData: FormData) {
         });
 
         revalidatePath(`/dashboard/workouts/${templateId}`);
-        return { success: true };
     } catch (error) {
         console.error(error);
-        return { success: false, error: 'Erro ao remover exercício' };
+        // Error handling on server components with form actions is tricky without useActionState
+        // For now, we just let it fail silently or log it
     }
 }

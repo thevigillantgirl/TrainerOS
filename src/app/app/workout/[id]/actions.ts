@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { decrypt } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export async function toggleExerciseCompletion(formData: FormData) {
     try {
@@ -41,16 +42,16 @@ export async function finishWorkout(formData: FormData) {
     try {
         const cookieStore = await cookies();
         const token = cookieStore.get('session')?.value;
-        if (!token) { /* Handle error or redirect */ }
+        if (!token) throw new Error('Unauthorized');
         const session = await decrypt(token);
-        if (!session || session.role !== 'STUDENT') { /* Handle error or redirect */ }
+        if (!session || session.role !== 'STUDENT') throw new Error('Forbidden');
 
         const workoutId = formData.get('workoutId') as string;
 
         const workout = await prisma.workout.findFirst({
             where: { id: workoutId, studentId: session.userId }
         });
-        if (!workout) { /* Handle error or redirect */ }
+        if (!workout) throw new Error('Not found');
 
         await prisma.workout.update({
             where: { id: workoutId },
