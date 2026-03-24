@@ -50,3 +50,23 @@ export async function addExercise(formData: FormData) {
         return { success: false, error: 'Erro interno ao criar exercício' };
     }
 }
+
+export async function deleteExercise(id: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'ADMIN') throw new Error('Unauthorized');
+
+    await prisma.exercise.update({
+        where: { id, tenantId: session.tenantId },
+        data: { deletedAt: new Date() }
+    });
+
+    // WIP: Storage Cleanup Integration
+    // if (exercise.videoUrl && exercise.videoUrl.includes('s3.amazonaws.com')) {
+    //    await deleteFromS3(exercise.videoUrl);
+    // }
+
+    revalidatePath('/dashboard/exercises');
+}

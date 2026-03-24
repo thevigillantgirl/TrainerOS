@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/auth';
 import Link from 'next/link';
 import { ArrowLeft, Activity, TrendingDown, TrendingUp } from 'lucide-react';
 import AddProgressForm from './AddProgressForm';
+import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
 
 export default async function ProgressPage() {
     const cookieStore = await cookies();
@@ -62,17 +63,30 @@ export default async function ProgressPage() {
                     <Activity size={20} className="mr-2 text-emerald-500" /> Histórico
                 </h3>
 
-                {entries.length === 0 ? (
+                {entries.filter(e => !e.deletedAt).length === 0 ? (
                     <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl text-center shadow-sm">
                         <p className="text-neutral-500">Nenhum registro encontrado.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {entries.map((entry) => (
-                            <div key={entry.id} className="bg-neutral-900 border border-neutral-800 p-5 rounded-xl shadow-sm">
+                        {entries.filter(e => !e.deletedAt).map((entry) => (
+                            <div key={entry.id} className="bg-neutral-900 border border-neutral-800 p-5 rounded-xl shadow-sm relative group">
+                                <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <DeleteConfirmModal
+                                        title="Apagar Registro"
+                                        description="Deseja excluir este registro de peso? O gráfico será atualizado."
+                                        buttonText="Excluir"
+                                        variant="danger"
+                                        onConfirm={async () => {
+                                            'use server';
+                                            const { deleteProgressEntry } = await import('./actions');
+                                            await deleteProgressEntry(entry.id);
+                                        }}
+                                    />
+                                </div>
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-white font-bold text-lg">{entry.weight} kg</span>
-                                    <span className="text-sm font-medium text-neutral-500">{entry.date.toLocaleDateString('pt-BR')}</span>
+                                    <span className="text-sm font-medium text-neutral-500 mr-8">{entry.date.toLocaleDateString('pt-BR')}</span>
                                 </div>
                                 {entry.notes && (
                                     <p className="text-sm text-neutral-400 mt-2 bg-neutral-950 p-3 rounded-lg border border-neutral-800/50">{entry.notes}</p>

@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/auth';
 import AddWorkoutTemplateForm from './AddWorkoutTemplateForm';
 import Link from 'next/link';
 import { Dumbbell, Target, Filter } from 'lucide-react';
+import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
 
 export default async function WorkoutsPage() {
     const cookieStore = await cookies();
@@ -56,6 +57,7 @@ export default async function WorkoutsPage() {
                                                 icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8" /><rect width="22" height="5" x="1" y="3" rx="1" /><line x1="10" x2="14" y1="12" y2="12" /></svg>}
                                                 onConfirm={async () => {
                                                     'use server';
+                                                    const { archiveWorkoutTemplate } = await import('./actions');
                                                     await archiveWorkoutTemplate(template.id);
                                                 }}
                                             />
@@ -67,6 +69,7 @@ export default async function WorkoutsPage() {
                                             variant="danger"
                                             onConfirm={async () => {
                                                 'use server';
+                                                const { deleteWorkoutTemplate } = await import('./actions');
                                                 await deleteWorkoutTemplate(template.id);
                                             }}
                                         />

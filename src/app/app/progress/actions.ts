@@ -49,3 +49,25 @@ export async function addProgressEntry(formData: FormData) {
         return { success: false, error: 'Erro ao salvar registro.' };
     }
 }
+
+export async function deleteProgressEntry(id: string) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
+    if (!token) throw new Error('Unauthorized');
+    const session = await decrypt(token);
+    if (!session || session.role !== 'STUDENT') throw new Error('Unauthorized');
+
+    await prisma.progressEntry.update({
+        where: { id, studentId: session.userId },
+        data: { deletedAt: new Date() }
+    });
+
+    // WIP: Storage Cleanup Integration
+    // if (entry.photos) {
+    //    const urls = JSON.parse(entry.photos);
+    //    for (const url of urls) await deleteFromS3(url);
+    // }
+
+    revalidatePath('/app/progress');
+    revalidatePath('/app');
+}

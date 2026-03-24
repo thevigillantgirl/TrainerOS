@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { decrypt } from '@/lib/auth';
 import AddExerciseForm from './AddExerciseForm';
 import { PlayCircle, Dumbbell, Tag } from 'lucide-react';
+import DeleteConfirmModal from '@/components/ui/DeleteConfirmModal';
 
 export default async function ExercisesPage() {
     const cookieStore = await cookies();
@@ -33,14 +34,29 @@ export default async function ExercisesPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {exercises.length === 0 ? (
+                {exercises.filter(e => !e.deletedAt).length === 0 ? (
                     <div className="col-span-full p-12 bg-neutral-900 border border-neutral-800 rounded-xl text-center text-neutral-500 shadow-sm">
                         <p className="text-lg mb-2">Nenhum exercício encontrado.</p>
                         <p className="text-sm">Clique em "Novo Exercício" para adicionar ao banco.</p>
                     </div>
                 ) : (
-                    exercises.map((exercise) => (
-                        <div key={exercise.id} className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-colors group flex flex-col shadow-sm">
+                    exercises.filter(e => !e.deletedAt).map((exercise) => (
+                        <div key={exercise.id} className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-colors group flex flex-col shadow-sm relative">
+                            {exercise.tenantId !== null && (
+                                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <DeleteConfirmModal
+                                        title="Excluir Exercício"
+                                        description={`Deseja realmente apagar o exercício "${exercise.name}"? Ele será removido do seu banco de dados.`}
+                                        buttonText="Excluir"
+                                        variant="danger"
+                                        onConfirm={async () => {
+                                            'use server';
+                                            const { deleteExercise } = await import('./actions');
+                                            await deleteExercise(exercise.id);
+                                        }}
+                                    />
+                                </div>
+                            )}
                             <div className="h-40 bg-neutral-800 relative flex items-center justify-center">
                                 {exercise.thumbnailUrl ? (
                                     <img src={exercise.thumbnailUrl} alt={exercise.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
